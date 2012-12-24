@@ -1,5 +1,4 @@
 import Prelude hiding (Functor, fmap, Monad, (>>=), (>>), sequence, mapM, mapM_)
-import Data.Tuple (swap)
 
 class Functor f where
   fmap :: (a -> b) -> f a -> f b
@@ -141,6 +140,5 @@ forM_ = flip mapM_
 (=<<) = flip (>>=)
 
 (>=>) :: (Monad m) => (a -> m b) -> (b -> m c) -> a -> m c
-f >=> g = \x ->
-  f x >>= \y ->
-  g y
+f >=> g = \x -> f x >>= g
+
