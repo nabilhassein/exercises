@@ -1,4 +1,4 @@
-import Prelude hiding (Functor, fmap, Monad, (>>=), (>>), sequence, mapM, mapM_)
+import Prelude hiding (Functor, fmap, Monad, (>>=), (>>), (=<<), sequence, sequence_, mapM, mapM_)
 
 class Functor f where
   fmap :: (a -> b) -> f a -> f b
@@ -128,7 +128,7 @@ mapM :: (Monad m) => (a -> m b) -> [a] -> m [b]
 mapM f = sequence . map f
 
 mapM_ :: (Monad m) => (a -> m b) -> [a] -> m ()
-mapM_ f xs = mapM f xs >> pure ()
+mapM_ f = sequence_ . map f
 
 forM :: (Monad m) => [a] -> (a -> m b) -> m [b]
 forM = flip mapM
