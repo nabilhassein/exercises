@@ -38,7 +38,7 @@ class Misty m where
   banana  :: (a -> m b) -> m a -> m b
   -- exercise 6
   furry' :: (a -> b) -> m a -> m b
-  furry' f x = undefined
+  furry' f = banana $ unicorn . f 
 
 
 -- exercise 7
