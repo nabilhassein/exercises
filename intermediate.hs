@@ -34,8 +34,25 @@ instance Fluffy (EitherRight a) where
 
 
 class Misty m where
-  banana  :: (a -> m b) -> m a -> m b
   unicorn :: a -> m a
+  banana  :: (a -> m b) -> m a -> m b
   -- exercise 6
   furry' :: (a -> b) -> m a -> m b
-  furry' f x = error "todo"
+  furry' f x = undefined
+
+
+-- exercise 7
+instance Misty [] where
+  unicorn x = [x]
+  banana = concatMap
+
+-- exercise 8
+instance Misty Maybe where
+  unicorn = Just
+  banana _ Nothing  = Nothing
+  banana f (Just x) = f x
+
+-- exercise 9
+instance Misty ((->) t) where
+  unicorn = const
+  banana = undefined
