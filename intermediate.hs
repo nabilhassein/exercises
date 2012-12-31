@@ -38,7 +38,7 @@ class Misty m where
   banana  :: (a -> m b) -> m a -> m b
   -- exercise 6
   furry' :: (a -> b) -> m a -> m b
-  furry' f = banana $ unicorn . f 
+  furry' f = banana $ unicorn . f
 
 
 -- exercise 7
@@ -55,4 +55,21 @@ instance Misty Maybe where
 -- exercise 9
 instance Misty ((->) t) where
   unicorn = const
-  banana = undefined
+  banana f g x = f (g x) x
+
+-- exercise 10
+instance Misty (EitherLeft b) where
+  unicorn = EitherLeft . Left
+  banana f (EitherLeft (Left a))  = f a
+  banana _ (EitherLeft (Right b)) = EitherLeft $ Right b
+
+-- exercise 11
+instance Misty (EitherRight a) where
+  unicorn = EitherRight . Right
+  banana _ (EitherRight (Left a))  = EitherRight $ Left a
+  banana f (EitherRight (Right b)) = f b
+
+
+-- exercise 12
+jellybean :: Misty m => m (m a) -> m a
+jellybean x = banana id x
