@@ -1,9 +1,7 @@
 import Prelude hiding (Functor, fmap, Monad, return, (>>=), (>>), (=<<), sequence, sequence_, mapM, mapM_)
 
-
 class Functor f where
   fmap :: (a -> b) -> f a -> f b
-
 
 class (Functor f) => Pointed f where
   pure :: a -> f a
@@ -197,3 +195,4 @@ forM_ = flip mapM_
 f >=> g = \x -> f x >>= g
 
 -- TODO: alternative
+

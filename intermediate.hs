@@ -28,7 +28,7 @@ instance Fluffy (EitherLeft b) where
 
 -- exercise 5
 instance Fluffy (EitherRight a) where
-  furry _ (EitherRight (Left a))  = EitherRight $ Left a
+  furry _ (EitherRight (Left a))  = EitherRight . Left $ a
   furry f (EitherRight (Right b)) = EitherRight . Right $ f b
 
 
@@ -86,3 +86,4 @@ moppy = undefined
 sausage :: Misty m => [m a] -> m [a]
 sausage []     = unicorn []
 sausage (x:xs) = undefined
+
