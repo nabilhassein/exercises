@@ -1,4 +1,7 @@
-import Prelude hiding (Functor, fmap, Monad, return, (>>=), (>>), (=<<), sequence, sequence_, mapM, mapM_)
+{-# LANGUAGE NoImplicitPrelude #-}
+
+--import Prelude hiding (Functor, fmap, Monad, return, (>>=), (>>), (=<<), sequence, sequence_, mapM, mapM_)
+import MyPrelude as Prelude
 
 class Functor f where
   fmap :: (a -> b) -> f a -> f b
@@ -164,6 +167,12 @@ sequence (x:xs) =
   sequence xs >>= \as ->
   return $ a:as
 
+--TODO: figure out NoImplicitPrelude hack so you can do this, etc.
+-- sequence (x:xs) = do
+--   a <- x
+--   as <- sequence xs
+--   return $ a:as
+
 sequence_ :: Monad m => [m a] -> m ()
 sequence_ xs = sequence xs >> return ()
 
@@ -171,7 +180,8 @@ replicateM :: (Monad m) => Int -> m a -> m [a]
 replicateM n = sequence . replicate n
 
 when :: (Monad m) => Bool -> m () -> m ()
-when p x = if p then x else return ()
+when True  x = x
+when False _ = return ()
 
 unless :: (Monad m) => Bool -> m () -> m ()
 unless = when . not
