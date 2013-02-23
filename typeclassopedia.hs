@@ -1,10 +1,8 @@
-{-# LANGUAGE NoImplicitPrelude #-}
-
---import Prelude hiding (Functor, fmap, Monad, return, (>>=), (>>), (=<<), sequence, sequence_, mapM, mapM_)
-import MyPrelude as Prelude
+import Prelude hiding (Functor, fmap, Monad, return, (>>=), (>>), (=<<), sequence, sequence_, mapM, mapM_)
 
 class Functor f where
   fmap :: (a -> b) -> f a -> f b
+
 
 class (Functor f) => Pointed f where
   pure :: a -> f a
@@ -67,6 +65,8 @@ instance Pointed (Either e) where
 
 instance Applicative (Either e) where
   Right f <*> Right x = Right $ f x
+  Left e  <*> _       = Left e
+  _       <*> Left e  = Left e
 
 instance Monad (Either e) where
   Right x >>= f = f x
@@ -91,10 +91,15 @@ instance Functor ZipList where
   fmap f = ZipList . map f . getZipList
 
 instance Pointed ZipList where
-  pure x = ZipList [x]
+  -- pure x = Ziplist [x] doesn't satisfy the identity law: pure id <*> v = v
+  -- because v might contain more than one element, and
+  -- zipWith returns a list with length of the smaller of the two input sizes
+  pure = ZipList . repeat
 
 instance Applicative ZipList where
   ZipList fs <*> ZipList xs = ZipList $ zipWith ($) fs xs
+
+-- ZipList is not a monad
 
 
 instance Functor ((,) e) where
@@ -117,7 +122,7 @@ instance Pointed ((->) e) where
   pure = const
 
 instance Applicative ((->) e) where
-  f <*> g = \x -> f x (g x)
+  (f <*> g) x = f x (g x)
 
 instance Monad ((->) e) where
   join f x = f x x
@@ -130,14 +135,14 @@ instance Monad ((->) e) where
 f <$> x = pure f <*> x
 
 (<$) :: (Applicative f) => a -> f b -> f a
-(<$) = fmap . const
+a <$ y = const a <$> y
 
 (<**>) :: Applicative f => f a -> f (a -> b) -> f b
 (<**>) = flip (<*>)
 
 -- another synonym for fmap
 liftA :: Applicative f => (a -> b) -> f a -> f b
-liftA = (<$>)
+liftA f x = f <$> x
 
 liftA2 :: Applicative f => (a -> b -> c) -> f a -> f b -> f c
 liftA2 f x y = f <$> x <*> y
@@ -149,11 +154,11 @@ liftA3 f x y z = f <$> x <*> y <*> z
 
 -- monad utilities
 
--- exact synonym for fmap
+-- synonym for fmap
 liftM :: (Monad m) => (a -> b) -> m a -> m b
 liftM f x = x >>= (return . f)
 
---exact synonym for (<*>)
+-- synonym for (<*>)
 ap :: (Monad m) => m (a -> b) -> m a -> m b
 ap f x =
   f >>= \g ->
@@ -161,27 +166,21 @@ ap f x =
   return $ g y
 
 sequence :: Monad m => [m a] -> m [a]
-sequence []     = return []
-sequence (x:xs) =
-  x >>= \a ->
-  sequence xs >>= \as ->
-  return $ a:as
-
---TODO: figure out NoImplicitPrelude hack so you can do this, etc.
--- sequence (x:xs) = do
---   a <- x
---   as <- sequence xs
---   return $ a:as
+sequence = foldr mcons (return [])
+  where mcons :: (Monad m) => m a -> m [a] -> m [a]
+        mcons x xs =
+          x >>= \a ->
+          xs >>= \as ->
+          return $ a:as
 
 sequence_ :: Monad m => [m a] -> m ()
-sequence_ xs = sequence xs >> return ()
+sequence_ = foldr (>>) (return ())
 
 replicateM :: (Monad m) => Int -> m a -> m [a]
 replicateM n = sequence . replicate n
 
 when :: (Monad m) => Bool -> m () -> m ()
-when True  x = x
-when False _ = return ()
+when p x = if p then x else return ()
 
 unless :: (Monad m) => Bool -> m () -> m ()
 unless = when . not
@@ -202,7 +201,7 @@ forM_ = flip mapM_
 (=<<) = flip (>>=)
 
 (>=>) :: (Monad m) => (a -> m b) -> (b -> m c) -> a -> m c
-f >=> g = \x -> f x >>= g
+(f >=> g) x = f x >>= g
 
 -- TODO: alternative
 
