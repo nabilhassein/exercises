@@ -35,19 +35,19 @@ it will prove convenient for f_n to be at index n in my list of permutations.
 The following functions describe the 3! = 6 possible permutations of [1, 2, 3].
 
 > f1 = id
-
+>
 > f2 1 = 2
 > f2 2 = 3
 > f2 3 = 1
-
+>
 > f3 = f2 . f2
-
+>
 > f4 1 = 2
 > f4 2 = 1
 > f4 3 = 3
-
+>
 > f5 = f2 . f4
-
+>
 > f6 = f2 . f2 . f4
 
 
@@ -87,7 +87,7 @@ This works because of the correspondence between indices of "output" and
 >   let i1 = read ans1 :: Int
 >       i2 = read ans2 :: Int
 >       f = (permutations !! i1) . (permutations !! i2)
->       -- (.) is function composition; (!!) is array indexing
+>       -- (.) is function composition; (!!) is list indexing
 >       a = elemIndex (map f input) output
 >   putStrLn $ show a ++ "\n"
 
