@@ -7,6 +7,11 @@ import Control.Monad (when)
 
 data Piece = X | O deriving (Eq, Show)
 
+data Error = NonEmpty | OutOfBounds
+instance Show Error where
+  show NonEmpty    = "\nThat square is already taken. Try another move."
+  show OutOfBounds = "\nThat square is out of bounds. Enter square from 1 to 3."
+
 type Position = (Int, Int)
 
 type Board = Map.Map Position Piece
@@ -30,28 +35,13 @@ emptyBoard :: Board
 emptyBoard = Map.empty
 
 
-makeMove :: Board -> Piece -> IO Board
-makeMove board piece = do
-  putStrLn $ "Player " ++ show piece ++ " to move."
-  position <- getMove
-  case Map.lookup position board of
-    Nothing -> return $ Map.insert position piece board
-    _       -> putStrLn "Choose an empty square." >> makeMove board piece
-
-
-getMove :: IO Position
-getMove = do
-  putStrLn "Make your move in the form (x, y)"
-  input <- getLine
-  putStrLn ""
-  let pos   = readMay input :: Maybe (Int, Int)
-      legal = [1, 2, 3]
-  case pos of
-    Just (x, y) -> if x `elem` legal && y `elem` legal
-                   then return (x, y)
-                   else putStrLn "Both coordinates should be from 1 to 3."
-                        >> getMove
-    _           -> putStrLn "Couldn't understand input. Try again." >> getMove
+makeMove :: Board -> Piece -> Position -> Either Error Board
+makeMove board piece position@(x, y) = let legal = [1, 2, 3] in
+  if x `notElem` legal || y `notElem` legal
+  then Left OutOfBounds
+  else case Map.lookup position board of
+    Nothing -> Right $ Map.insert position piece board
+    _       -> Left NonEmpty
 
 
 win :: Board -> Piece -> Bool
@@ -84,23 +74,28 @@ showCell Nothing  = "."
 showBoard :: Board -> String
 showBoard board =
   let spot = showCell . flip Map.lookup board
-  in "   1   2   3 \n" ++ 
+  in "   1   2   3 \n"                                                    ++ 
      " 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1) ++ 
      "\n  ---|---|---\n"                                                  ++
      " 2 " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2) ++
      "\n  ---|---|---\n"                                                  ++
      " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3) ++
-     "\n"
 
 
 loop :: Board -> Piece -> IO ()
 loop board piece = do
   putStrLn $ showBoard board
   done <- gameOver board
-  if not done
-    then do newBoard <- makeMove board piece
-            loop newBoard (other piece)
-    else putStrLn "Play again!"
+  if done
+    then putStrLn "\nHope you had fun. Play again!"
+    else do putStrLn $ "\nPlayer " ++ show piece ++ ", move in the form (x, y)."
+            input <- getLine
+            case readMay input :: Maybe (Int, Int) of
+              Nothing -> putStrLn "\nCouldn't understand input. Try again."
+                         >> loop board piece
+              Just p  -> case makeMove board piece p of
+                Left  err      -> putStrLn (show err) >> loop board piece
+                Right newBoard -> loop newBoard (other piece)
 
 main :: IO ()
 main = loop emptyBoard X
