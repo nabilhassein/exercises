@@ -36,6 +36,7 @@ puts = liftIO . putStrLn
 
 makeMove :: Board -> Piece -> MaybeT IO Board
 makeMove board piece = do
+  puts $ "Player " ++ show piece ++ " to move."
   position <- getMove
   case Map.lookup position board of
     Nothing -> return $ Map.insert position piece board
@@ -68,9 +69,15 @@ draw board = full && not (win board X) && not (win board O)
   where full   = length values == 9
         values = map snd $ Map.toList board
 
-gameOver :: Board -> Bool
-gameOver board = win board X || win board O || draw board
-
+gameOver :: Board -> MaybeT IO Bool
+gameOver board = do
+  let x = win board X
+      o = win board O
+      d = draw board
+  when x $ puts "Player X wins!"
+  when o $ puts "Player O wins!"
+  when d $ puts "Cat's game!"
+  return $ x || o || d
 
 showCell :: Maybe Piece -> String
 showCell (Just X) = "X"
@@ -81,21 +88,18 @@ showBoard :: Board -> String
 showBoard board =
   let spot = showCell . flip Map.lookup board
   in "   1   2   3 \n" ++ 
-     " 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1)
-     ++ "\n  ---|---|---\n" ++
-     " 2 " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2)
-     ++ "\n  ---|---|---\n" ++
-     " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
-
+     " 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1) ++ 
+     "\n  ---|---|---\n"                                                  ++
+     " 2 " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2) ++
+     "\n  ---|---|---\n"                                                  ++
+     " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3) ++
+     "\n"
 
 loop :: Board -> Piece -> MaybeT IO ()
 loop board piece = do
-  puts $ showBoard board ++ "\n"
-  when (win board X) (puts "Player X wins!")
-  when (win board O) (puts "Player O wins!")
-  when (draw board) (puts "Cat's game!")
-  guard . not $ gameOver board -- TODO: real victory/draw message w/o "Nothing"
-  puts $ "Player " ++ show piece ++ " to move."
+  puts $ showBoard board
+  done <- gameOver board
+  guard $ not done
   newBoard <- makeMove board piece
   loop newBoard (other piece)
 
