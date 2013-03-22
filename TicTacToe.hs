@@ -1,6 +1,7 @@
 {-# LANGUAGE TupleSections #-}
 
 module TicTacToe where
+
 import qualified Data.Map as Map
 import Data.Maybe (fromJust)
 
@@ -13,7 +14,7 @@ other O = X
 
 type Position = (Int, Int)
 
--- could employ a bit of cleverness here instead
+-- could probably employ a bit of cleverness here instead
 winningPositions :: [[Position]]
 winningPositions = [[(1, 1), (1, 2), (1, 3)],
                     [(2, 1), (2, 2), (2, 3)],
@@ -29,9 +30,9 @@ type Board = Map.Map Position (Maybe Piece)
 -- Just Piece means already played there; Nothing means empty square
 
 emptyBoard :: Board
-emptyBoard = Map.fromList $ map (, Nothing) [(1, 1), (1, 2), (1, 3),
-                                             (2, 1), (2, 2), (2, 3),
-                                             (3, 1), (3, 2), (3, 3)]
+emptyBoard = Map.fromList $ map (, Nothing) [(1, 1), (2, 1), (3, 1),
+                                             (1, 2), (2, 2), (3, 2),
+                                             (1, 3), (2, 3), (3, 3)]
 
 
 
@@ -68,9 +69,9 @@ draw board = full && not (win board X) && not (win board O)
 
 -- for testing win, draw, etc.
 test :: Board
-test = Map.fromList [((1, 1), Just X), ((1, 2), Just O), ((1, 3), Just O),
-                     ((2, 1), Just O), ((2, 2), Just X), ((2, 3), Just O),
-                     ((3, 1), Just X), ((3, 2), Just O), ((3, 3), Just X)]
+test = Map.fromList [((1, 1), Just X), ((2, 1), Just O), ((3, 1), Just O),
+                     ((1, 2), Just O), ((2, 2), Just X), ((3, 2), Just O),
+                     ((1, 3), Just X), ((2, 3), Just O), ((3, 3), Just X)]
                          
 
 
@@ -82,11 +83,11 @@ showPiece Nothing  = "."
 showBoard :: Board -> String
 showBoard board =
   let spot = showPiece . fromJust . flip Map.lookup board
-  in " " ++ spot (1, 1) ++ " | " ++ spot (1, 2) ++ " | " ++ spot (1, 3)
-     ++ "\n" ++ "---|---|---" ++ "\n" ++
-     " " ++ spot (2, 1) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (2, 3)
-     ++ "\n" ++ "---|---|---" ++ "\n" ++
-     " " ++ spot (3, 1) ++ " | " ++ spot (3, 2) ++ " | " ++ spot (3, 3)
+  in " " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1)
+     ++ "\n---|---|---\n" ++
+     " " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2)
+     ++ "\n---|---|---\n" ++
+     " " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
 
                      
 main :: IO ()
