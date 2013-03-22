@@ -1,12 +1,10 @@
-{-# LANGUAGE TupleSections #-}
-
 module TicTacToe where
 
 import qualified Data.Map as Map
+import Safe (readMay)
 import Control.Monad (guard, when)
 import Control.Monad.Trans (liftIO)
 import Control.Monad.Maybe (MaybeT, runMaybeT)
-
 
 data Piece = X | O deriving (Eq, Show)
 
@@ -14,28 +12,17 @@ other :: Piece -> Piece
 other X = O
 other O = X
 
--- is there a better way to represent this?
-data Legal = One | Two | Three deriving (Eq, Ord, Show)
+type Position = (Int, Int)
 
-convert :: Int -> Maybe Legal
-convert 1 = Just One
-convert 2 = Just Two
-convert 3 = Just Three
-convert _ = Nothing
-
-type Position = (Legal, Legal)
-
--- could probably employ a bit of cleverness here instead
 winningPositions :: [[Position]]
-winningPositions =
-  [[(One  , One)  , (One  , Two)  , (One  , Three)], -- first 3: vertical
-   [(Two  , One)  , (Two  , Two)  , (Two  , Three)],
-   [(Three, One)  , (Three, Two)  , (Three, Three)],
-   [(One  , One)  , (Two  , One)  , (Three, One)]  , -- next 3: horizontal
-   [(One  , Two)  , (Two  , Two)  , (Three, Two)]  ,
-   [(One  , Three), (Two  , Three), (Three, Three)],
-   [(One  , One)  , (Two  , Two)  , (Three, Three)], -- last 2: diagonal
-   [(One  , Three), (Two  , Two)  , (Three, One)]]  
+winningPositions = [[(1, 1), (1, 2), (1, 3)], -- first 3: vertical
+                    [(2, 1), (2, 2), (2, 3)],
+                    [(3, 1), (3, 2), (3, 3)],
+                    [(1, 1), (2, 1), (3, 1)], -- next 3: horizontal
+                    [(1, 2), (2, 2), (3, 2)],
+                    [(1, 3), (2, 3), (3, 3)],
+                    [(1, 1), (2, 2), (3, 3)], -- last 2: diagonal
+                    [(1, 3), (2, 2), (3, 1)]]  
 
 
 type Board = Map.Map Position Piece
@@ -54,10 +41,12 @@ getMove :: MaybeT IO Position
 getMove = let puts = liftIO . putStrLn in do
   puts "Make your move in the form (x, y)"
   input <- liftIO getLine
-  let (x, y) = read input :: (Int, Int) -- TODO: refactor using safe read
-  case (convert x, convert y) of
-    (Just a, Just b) -> return (a, b)
-    _                -> puts "Illegal move. Try again." >> getMove
+  let pos = readMay input :: Maybe (Int, Int)
+  case pos of
+    Just (x, y) -> if x `elem` [1, 2, 3] && y `elem` [1, 2, 3]
+                   then return (x, y)
+                   else puts "Both coordinates should be from 1 to 3." >> getMove
+    _           -> puts "Illegal input. Try again." >> getMove
 
 
 threeInARow :: Board -> Piece -> [Position] -> Bool
@@ -65,7 +54,8 @@ threeInARow board pieceType lane = 3 == length (filter (== (Just pieceType))
                                           [Map.lookup spot board | spot <- lane])
 
 win :: Board -> Piece -> Bool
-win board pieceType = or [threeInARow board pieceType lane | lane <- winningPositions]
+win board pieceType = or [threeInARow board pieceType lane
+                         | lane <- winningPositions]
 
   
 draw :: Board -> Bool
@@ -79,9 +69,9 @@ gameOver board = win board X || win board O || draw board
 
 -- for testing win, draw, etc.
 test :: Board
-test = Map.fromList [((One, One), X), ((Two, One), O), ((Three, One), O),
-                     ((One, Two), O), ((Two, Two), X), ((Three, Two), O),
-                     ((One, Three), X), ((Two, Three), O), ((Three, Three), X)]
+test = Map.fromList [((1, 1), X), ((2, 1), O), ((3, 1), O),
+                     ((1, 2), O), ((2, 2), X), ((3, 2), O),
+                     ((1, 3), X), ((2, 3), O), ((3, 3), X)]
                          
 
 showCell :: Maybe Piece -> String
@@ -92,11 +82,11 @@ showCell Nothing  = "."
 showBoard :: Board -> String
 showBoard board =
   let spot = showCell . flip Map.lookup board
-  in " " ++ spot (One, One) ++ " | " ++ spot (Two, One) ++ " | " ++ spot (Three, One)
+  in " " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1)
      ++ "\n---|---|---\n" ++
-     " " ++ spot (One, Two) ++ " | " ++ spot (Two, Two) ++ " | " ++ spot (Three, Two)
+     " " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2)
      ++ "\n---|---|---\n" ++
-     " " ++ spot (One, Three) ++ " | " ++ spot (Two, Three) ++ " | " ++ spot (Three, Three)
+     " " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
 
 
 loop :: Board -> Piece -> MaybeT IO ()
@@ -110,7 +100,7 @@ loop board piece = let puts = liftIO . putStrLn in do
   position <- getMove
   case makeMove board position piece of
     Just newBoard -> loop newBoard (other piece)
-    Nothing       -> (puts "Illegal move. Try again.") >> loop board piece
+    Nothing       -> (puts "Choose an empty square.") >> loop board piece
 
 main :: IO (Maybe ())
 main = runMaybeT $ loop emptyBoard X
