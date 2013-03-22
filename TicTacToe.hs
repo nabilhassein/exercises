@@ -7,10 +7,11 @@ import Control.Monad (when)
 
 data Piece = X | O deriving (Eq, Show)
 
-data Error = NonEmpty | OutOfBounds
+data Error = NonEmpty | OutOfBounds | BadInput
 instance Show Error where
   show NonEmpty    = "\nThat square is already taken. Try another move."
   show OutOfBounds = "\nThat square is out of bounds. Enter square from 1 to 3."
+  show BadInput    = "\nCouldn't understand input. Try again."
 
 type Position = (Int, Int)
 
@@ -35,13 +36,15 @@ emptyBoard :: Board
 emptyBoard = Map.empty
 
 
-makeMove :: Board -> Piece -> Position -> Either Error Board
-makeMove board piece position@(x, y) = let legal = [1, 2, 3] in
-  if x `notElem` legal || y `notElem` legal
-  then Left OutOfBounds
-  else case Map.lookup position board of
-    Nothing -> Right $ Map.insert position piece board
-    _       -> Left NonEmpty
+makeMove :: Board -> String -> Piece -> Either Error Board
+makeMove board position piece = let legal = [1, 2, 3] in
+  case readMay position :: Maybe (Int, Int) of
+    Nothing     -> Left BadInput
+    Just (x, y) -> if x `notElem` legal || y `notElem` legal
+                   then Left OutOfBounds
+                   else case Map.lookup (x, y) board of
+                     Nothing -> Right $ Map.insert (x, y) piece board
+                     _       -> Left NonEmpty
 
 
 win :: Board -> Piece -> Bool
@@ -90,12 +93,9 @@ loop board piece = do
     then putStrLn "\nHope you had fun. Play again!"
     else do putStrLn $ "\nPlayer " ++ show piece ++ ", move in the form (x, y)."
             input <- getLine
-            case readMay input :: Maybe (Int, Int) of
-              Nothing -> putStrLn "\nCouldn't understand input. Try again."
-                         >> loop board piece
-              Just p  -> case makeMove board piece p of
-                Left  err      -> putStrLn (show err) >> loop board piece
-                Right newBoard -> loop newBoard (other piece)
+            case makeMove board input piece of
+              Left  err      -> putStrLn (show err) >> loop board piece
+              Right newBoard -> loop newBoard (other piece)
 
 main :: IO ()
 main = loop emptyBoard X
