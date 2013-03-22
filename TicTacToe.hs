@@ -3,10 +3,10 @@
 module TicTacToe where
 
 import qualified Data.Map as Map
-import Data.Maybe (fromJust)
-import Control.Monad (guard)
+import Control.Monad (guard, when)
 import Control.Monad.Trans (liftIO)
-import Control.Monad.Maybe
+import Control.Monad.Maybe (MaybeT, runMaybeT)
+import Data.Maybe (fromJust)
 
 data Piece = X | O deriving (Eq, Show)
 
@@ -40,18 +40,19 @@ emptyBoard = Map.fromList $ map (, Nothing) [(1, 1), (2, 1), (3, 1),
 
 
 move :: Board -> Position -> Piece -> Maybe Board
-move board position pieceType = case Map.lookup position board of
+move board position pieceType = case fromJust $ Map.lookup position board of
   Nothing -> Just $ Map.insert position (Just pieceType) board
   _       -> Nothing  -- can only insert X or O at empty square
 
 
 getMove :: MaybeT IO Position
-getMove = do
-  liftIO $ putStrLn "Make your move in the form (x, y)"
+getMove = let puts = liftIO . putStrLn in do
+  puts "Make your move in the form (x, y)"
   input <- liftIO getLine
   let position = read input :: Position
-  guard $ position `elem` Map.keys emptyBoard -- check if a legal square
-  return position
+  if position `elem` Map.keys emptyBoard -- check if a legal square
+    then return position
+    else (puts "That's not on the board. Try again.") >> getMove
 
 
 check :: Board -> Piece -> [Position] -> Bool
@@ -94,13 +95,18 @@ showBoard board =
 
 loop :: Board -> Piece -> MaybeT IO ()
 loop board piece = let puts = liftIO . putStrLn in do
-  puts $ showBoard board
+  puts $ showBoard board ++ "\n"
+  when (win board X) (puts "Player X wins!")
+  guard . not $ win board X
+  when (win board O) (puts "Player O wins!")
+  guard . not $ win board O
+  when (draw board) (puts "Cat's game!")
+  guard . not $ draw board -- TODO: real victory/draw message
   puts $ "Player " ++ show piece ++ " to move."
   position <- getMove
-  board' <- return $ move board position piece
-  case board' of
+  case move board position piece of
     Just newBoard -> loop newBoard (other piece)
-    Nothing       -> (puts $ "Bad input. Try again.") >> loop board piece
+    Nothing       -> (puts "Illegal move. Try again.") >> loop board piece
 
 main :: IO (Maybe ())
 main = runMaybeT $ loop emptyBoard X
