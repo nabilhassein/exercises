@@ -2,7 +2,6 @@ module TicTacToe where
 
 import qualified Data.Map as Map
 import Safe (readMay)
-import Control.Monad (when)
 
 
 data Piece = X | O deriving (Eq, Show)
@@ -58,15 +57,12 @@ threeInARow board pieceType lane = 3 == length (filter (== (Just pieceType))
 draw :: Board -> Bool
 draw board = (Map.size board == 9) && not (win board X) && not (win board O)
 
-gameOver :: Board -> IO Bool
-gameOver board = do
-  let x = win board X
-      o = win board O
-      d = draw board
-  when x $ putStrLn "Player X wins!"
-  when o $ putStrLn "Player O wins!"
-  when d $ putStrLn "Cat's game!"
-  return $ x || o || d
+gameOver :: Board -> Maybe Piece
+gameOver board
+  | win board X = Just X
+  | win board O = Just O
+  | otherwise   = Nothing
+
 
 
 showCell :: Maybe Piece -> String
@@ -88,14 +84,14 @@ showBoard board =
 loop :: Board -> Piece -> IO ()
 loop board piece = do
   putStrLn $ showBoard board
-  done <- gameOver board
-  if done
-    then putStrLn "\nHope you had fun. Play again!"
-    else do putStrLn $ "\nPlayer " ++ show piece ++ ", move in the form (x, y)."
-            input <- getLine
-            case makeMove board input piece of
-              Left  err      -> putStrLn (show err) >> loop board piece
-              Right newBoard -> loop newBoard (other piece)
+  case gameOver board of
+    Just winner -> putStrLn $ "Player " ++ show winner ++ " wins!"
+    Nothing     -> do
+      putStrLn $ "\nPlayer " ++ show piece ++ ", move in the form (x, y)."
+      input <- getLine
+      case makeMove board input piece of
+        Left  err      -> putStrLn (show err) >> loop board piece
+        Right newBoard -> loop newBoard (other piece)
 
 main :: IO ()
 main = loop emptyBoard X
