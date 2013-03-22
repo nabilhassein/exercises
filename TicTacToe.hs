@@ -18,10 +18,10 @@ type Position = (Int, Int)
 winningPositions :: [[Position]]
 winningPositions = [[(1, 1), (1, 2), (1, 3)],
                     [(2, 1), (2, 2), (2, 3)],
-                    [(3, 1), (3, 2), (3, 3)], -- first 3 are horizontal
+                    [(3, 1), (3, 2), (3, 3)], -- first 3 are vertical
                     [(1, 1), (2, 1), (3, 1)],
                     [(1, 2), (2, 2), (3, 2)],
-                    [(1, 3), (2, 3), (3, 3)], -- next 3 are vertical
+                    [(1, 3), (2, 3), (3, 3)], -- next 3 are horizontal
                     [(1, 1), (2, 2), (3, 3)],
                     [(1, 3), (2, 2), (3, 1)]] -- last 2 are diagonal
 
