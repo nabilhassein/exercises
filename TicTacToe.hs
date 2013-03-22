@@ -69,7 +69,7 @@ gameOver board = do
 showCell :: Maybe Piece -> String
 showCell (Just X) = "X"
 showCell (Just O) = "O"
-showCell Nothing  = "."
+showCell Nothing  = " "
 
 showBoard :: Board -> String
 showBoard board =
@@ -79,7 +79,7 @@ showBoard board =
      "\n  ---|---|---\n"                                                  ++
      " 2 " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2) ++
      "\n  ---|---|---\n"                                                  ++
-     " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3) ++
+     " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
 
 
 loop :: Board -> Piece -> IO ()
