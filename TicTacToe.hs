@@ -8,11 +8,14 @@ import Control.Monad.Maybe (MaybeT, runMaybeT)
 
 data Piece = X | O deriving (Eq, Show)
 
+type Position = (Int, Int)
+
+type Board = Map.Map Position Piece
+
+
 other :: Piece -> Piece
 other X = O
 other O = X
-
-type Position = (Int, Int)
 
 winningPositions :: [[Position]]
 winningPositions = [[(1, 1), (1, 2), (1, 3)], -- first 3: vertical
@@ -24,14 +27,12 @@ winningPositions = [[(1, 1), (1, 2), (1, 3)], -- first 3: vertical
                     [(1, 1), (2, 2), (3, 3)], -- last 2: diagonal
                     [(1, 3), (2, 2), (3, 1)]]  
 
-
-type Board = Map.Map Position Piece
-
 emptyBoard :: Board
 emptyBoard = Map.empty
 
 puts :: String -> MaybeT IO ()
 puts = liftIO . putStrLn
+
 
 makeMove :: Board -> Piece -> MaybeT IO Board
 makeMove board piece = do
@@ -45,38 +46,31 @@ getMove :: MaybeT IO Position
 getMove = do
   puts "Make your move in the form (x, y)"
   input <- liftIO getLine
-  let pos = readMay input :: Maybe (Int, Int)
+  let pos   = readMay input :: Maybe (Int, Int)
+      legal = [1, 2, 3]
   case pos of
-    Just (x, y) -> if x `elem` [1, 2, 3] && y `elem` [1, 2, 3]
+    Just (x, y) -> if x `elem` legal && y `elem` legal
                    then return (x, y)
                    else puts "Both coordinates should be from 1 to 3." >> getMove
-    _           -> puts "Illegal input. Try again." >> getMove
+    _           -> puts "Couldn't understand input. Try again." >> getMove
 
-
-threeInARow :: Board -> Piece -> [Position] -> Bool
-threeInARow board pieceType lane = 3 == length (filter (== (Just pieceType))
-                                          [Map.lookup spot board | spot <- lane])
 
 win :: Board -> Piece -> Bool
 win board pieceType = or [threeInARow board pieceType lane
                          | lane <- winningPositions]
 
-  
+threeInARow :: Board -> Piece -> [Position] -> Bool
+threeInARow board pieceType lane = 3 == length (filter (== (Just pieceType))
+                                          [Map.lookup spot board | spot <- lane])
+
 draw :: Board -> Bool
 draw board = full && not (win board X) && not (win board O)
   where full   = length values == 9
         values = map snd $ Map.toList board
 
-
 gameOver :: Board -> Bool
 gameOver board = win board X || win board O || draw board
 
--- for testing win, draw, etc.
-test :: Board
-test = Map.fromList [((1, 1), X), ((2, 1), O), ((3, 1), O),
-                     ((1, 2), O), ((2, 2), X), ((3, 2), O),
-                     ((1, 3), X), ((2, 3), O), ((3, 3), X)]
-                         
 
 showCell :: Maybe Piece -> String
 showCell (Just X) = "X"
