@@ -6,7 +6,7 @@ import qualified Data.Map as Map
 import Control.Monad (guard, when)
 import Control.Monad.Trans (liftIO)
 import Control.Monad.Maybe (MaybeT, runMaybeT)
-import Data.Maybe (fromJust)
+
 
 data Piece = X | O deriving (Eq, Show)
 
@@ -14,51 +14,55 @@ other :: Piece -> Piece
 other X = O
 other O = X
 
+-- is there a better way to represent this?
+data Legal = One | Two | Three deriving (Eq, Ord, Show)
 
-type Position = (Int, Int)
+convert :: Int -> Maybe Legal
+convert 1 = Just One
+convert 2 = Just Two
+convert 3 = Just Three
+convert _ = Nothing
+
+type Position = (Legal, Legal)
 
 -- could probably employ a bit of cleverness here instead
 winningPositions :: [[Position]]
-winningPositions = [[(1, 1), (1, 2), (1, 3)],
-                    [(2, 1), (2, 2), (2, 3)],
-                    [(3, 1), (3, 2), (3, 3)], -- first 3 are vertical
-                    [(1, 1), (2, 1), (3, 1)],
-                    [(1, 2), (2, 2), (3, 2)],
-                    [(1, 3), (2, 3), (3, 3)], -- next 3 are horizontal
-                    [(1, 1), (2, 2), (3, 3)],
-                    [(1, 3), (2, 2), (3, 1)]] -- last 2 are diagonal
+winningPositions =
+  [[(One  , One)  , (One  , Two)  , (One  , Three)], -- first 3: vertical
+   [(Two  , One)  , (Two  , Two)  , (Two  , Three)],
+   [(Three, One)  , (Three, Two)  , (Three, Three)],
+   [(One  , One)  , (Two  , One)  , (Three, One)]  , -- next 3: horizontal
+   [(One  , Two)  , (Two  , Two)  , (Three, Two)]  ,
+   [(One  , Three), (Two  , Three), (Three, Three)],
+   [(One  , One)  , (Two  , Two)  , (Three, Three)], -- last 2: diagonal
+   [(One  , Three), (Two  , Two)  , (Three, One)]]  
 
 
-type Board = Map.Map Position (Maybe Piece)
--- Just Piece means already played there; Nothing means empty square
+type Board = Map.Map Position Piece
 
 emptyBoard :: Board
-emptyBoard = Map.fromList $ map (, Nothing) [(1, 1), (2, 1), (3, 1),
-                                             (1, 2), (2, 2), (3, 2),
-                                             (1, 3), (2, 3), (3, 3)]
+emptyBoard = Map.empty
 
 
-
-move :: Board -> Position -> Piece -> Maybe Board
-move board position pieceType = case fromJust $ Map.lookup position board of
-  Nothing -> Just $ Map.insert position (Just pieceType) board
-  _       -> Nothing  -- can only insert X or O at empty square
+makeMove :: Board -> Position -> Piece -> Maybe Board
+makeMove board position pieceType = case Map.lookup position board of
+  Nothing -> Just $ Map.insert position pieceType board
+  _       -> Nothing  -- can only insert an X or O at an empty square
 
 
 getMove :: MaybeT IO Position
 getMove = let puts = liftIO . putStrLn in do
   puts "Make your move in the form (x, y)"
   input <- liftIO getLine
-  let position = read input :: Position
-  if position `elem` Map.keys emptyBoard -- check if a legal square
-    then return position
-    else (puts "That's not on the board. Try again.") >> getMove
+  let (x, y) = read input :: (Int, Int) -- TODO: refactor using safe read
+  case (convert x, convert y) of
+    (Just a, Just b) -> return (a, b)
+    _                -> puts "Illegal move. Try again." >> getMove
 
 
 check :: Board -> Piece -> [Position] -> Bool
 check board pieceType lane = 3 == length (filter (== (Just pieceType))
-                                          [fromJust $ Map.lookup spot board
-                                          | spot <- lane])
+                                          [Map.lookup spot board | spot <- lane])
 
 win :: Board -> Piece -> Bool
 win board pieceType = or [check board pieceType lane | lane <- winningPositions]
@@ -66,48 +70,48 @@ win board pieceType = or [check board pieceType lane | lane <- winningPositions]
   
 draw :: Board -> Bool
 draw board = full && not (win board X) && not (win board O)
-  where full   = Nothing `notElem` values
+  where full   = length values == 9
         values = map snd $ Map.toList board
 
 
+gameOver :: Board -> Bool
+gameOver board = win board X || win board O || draw board
+
 -- for testing win, draw, etc.
 test :: Board
-test = Map.fromList [((1, 1), Just X), ((2, 1), Just O), ((3, 1), Just O),
-                     ((1, 2), Just O), ((2, 2), Just X), ((3, 2), Just O),
-                     ((1, 3), Just X), ((2, 3), Just O), ((3, 3), Just X)]
+test = Map.fromList [((One, One), X), ((Two, One), O), ((Three, One), O),
+                     ((One, Two), O), ((Two, Two), X), ((Three, Two), O),
+                     ((One, Three), X), ((Two, Three), O), ((Three, Three), X)]
                          
 
-
-showPiece :: Maybe Piece -> String
-showPiece (Just X) = "X"
-showPiece (Just O) = "O"
-showPiece Nothing  = "."
+showCell :: Maybe Piece -> String
+showCell (Just X) = "X"
+showCell (Just O) = "O"
+showCell Nothing  = "."
 
 showBoard :: Board -> String
 showBoard board =
-  let spot = showPiece . fromJust . flip Map.lookup board
-  in " " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1)
+  let spot = showCell . flip Map.lookup board
+  in " " ++ spot (One, One) ++ " | " ++ spot (Two, One) ++ " | " ++ spot (Three, One)
      ++ "\n---|---|---\n" ++
-     " " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2)
+     " " ++ spot (One, Two) ++ " | " ++ spot (Two, Two) ++ " | " ++ spot (Three, Two)
      ++ "\n---|---|---\n" ++
-     " " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
+     " " ++ spot (One, Three) ++ " | " ++ spot (Two, Three) ++ " | " ++ spot (Three, Three)
 
 
 loop :: Board -> Piece -> MaybeT IO ()
 loop board piece = let puts = liftIO . putStrLn in do
   puts $ showBoard board ++ "\n"
   when (win board X) (puts "Player X wins!")
-  guard . not $ win board X
   when (win board O) (puts "Player O wins!")
-  guard . not $ win board O
   when (draw board) (puts "Cat's game!")
-  guard . not $ draw board -- TODO: real victory/draw message
+  guard . not $ gameOver board -- TODO: real victory/draw message w/o "Nothing"
   puts $ "Player " ++ show piece ++ " to move."
   position <- getMove
-  case move board position piece of
+  case makeMove board position piece of
     Just newBoard -> loop newBoard (other piece)
     Nothing       -> (puts "Illegal move. Try again.") >> loop board piece
 
 main :: IO (Maybe ())
 main = runMaybeT $ loop emptyBoard X
-  
+
