@@ -60,12 +60,12 @@ getMove = let puts = liftIO . putStrLn in do
     _                -> puts "Illegal move. Try again." >> getMove
 
 
-check :: Board -> Piece -> [Position] -> Bool
-check board pieceType lane = 3 == length (filter (== (Just pieceType))
+threeInARow :: Board -> Piece -> [Position] -> Bool
+threeInARow board pieceType lane = 3 == length (filter (== (Just pieceType))
                                           [Map.lookup spot board | spot <- lane])
 
 win :: Board -> Piece -> Bool
-win board pieceType = or [check board pieceType lane | lane <- winningPositions]
+win board pieceType = or [threeInARow board pieceType lane | lane <- winningPositions]
 
   
 draw :: Board -> Bool
