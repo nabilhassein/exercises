@@ -4,6 +4,9 @@ module TicTacToe where
 
 import qualified Data.Map as Map
 import Data.Maybe (fromJust)
+import Control.Monad (guard)
+import Control.Monad.Trans (liftIO)
+import Control.Monad.Maybe
 
 data Piece = X | O deriving (Eq, Show)
 
@@ -42,14 +45,13 @@ move board position pieceType = case Map.lookup position board of
   _       -> Nothing  -- can only insert X or O at empty square
 
 
-getMove :: IO (Maybe Position)
+getMove :: MaybeT IO Position
 getMove = do
-  putStrLn "Make a move in the form (x, y)"
-  input <- getLine
+  liftIO $ putStrLn "Make your move in the form (x, y)"
+  input <- liftIO getLine
   let position = read input :: Position
-  if position `elem` Map.keys emptyBoard -- i.e. if it is a square on the board
-    then return (Just position)
-    else return Nothing
+  guard $ position `elem` Map.keys emptyBoard -- check if a legal square
+  return position
 
 
 check :: Board -> Piece -> [Position] -> Bool
@@ -89,7 +91,17 @@ showBoard board =
      ++ "\n---|---|---\n" ++
      " " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
 
-                     
-main :: IO ()
-main = undefined
+
+loop :: Board -> Piece -> MaybeT IO ()
+loop board piece = let puts = liftIO . putStrLn in do
+  puts $ showBoard board
+  puts $ "Player " ++ show piece ++ " to move."
+  position <- getMove
+  board' <- return $ move board position piece
+  case board' of
+    Just newBoard -> loop newBoard (other piece)
+    Nothing       -> (puts $ "Bad input. Try again.") >> loop board piece
+
+main :: IO (Maybe ())
+main = runMaybeT $ loop emptyBoard X
   
