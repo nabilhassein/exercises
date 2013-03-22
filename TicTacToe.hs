@@ -4,6 +4,7 @@ import qualified Data.Map as Map
 import Safe (readMay)
 import Control.Monad (when)
 
+
 data Piece = X | O deriving (Eq, Show)
 
 type Position = (Int, Int)
@@ -42,6 +43,7 @@ getMove :: IO Position
 getMove = do
   putStrLn "Make your move in the form (x, y)"
   input <- getLine
+  putStrLn ""
   let pos   = readMay input :: Maybe (Int, Int)
       legal = [1, 2, 3]
   case pos of
@@ -61,9 +63,7 @@ threeInARow board pieceType lane = 3 == length (filter (== (Just pieceType))
                                           [Map.lookup spot board | spot <- lane])
 
 draw :: Board -> Bool
-draw board = full && not (win board X) && not (win board O)
-  where full   = length values == 9
-        values = map snd $ Map.toList board
+draw board = (Map.size board == 9) && not (win board X) && not (win board O)
 
 gameOver :: Board -> IO Bool
 gameOver board = do
@@ -74,6 +74,7 @@ gameOver board = do
   when o $ putStrLn "Player O wins!"
   when d $ putStrLn "Cat's game!"
   return $ x || o || d
+
 
 showCell :: Maybe Piece -> String
 showCell (Just X) = "X"
@@ -91,6 +92,7 @@ showBoard board =
      " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3) ++
      "\n"
 
+
 loop :: Board -> Piece -> IO ()
 loop board piece = do
   putStrLn $ showBoard board
@@ -98,7 +100,7 @@ loop board piece = do
   if not done
     then do newBoard <- makeMove board piece
             loop newBoard (other piece)
-    else return ()
+    else putStrLn "Play again!"
 
 main :: IO ()
 main = loop emptyBoard X
