@@ -30,15 +30,19 @@ type Board = Map.Map Position Piece
 emptyBoard :: Board
 emptyBoard = Map.empty
 
+puts :: String -> MaybeT IO ()
+puts = liftIO . putStrLn
 
-makeMove :: Board -> Position -> Piece -> Maybe Board
-makeMove board position pieceType = case Map.lookup position board of
-  Nothing -> Just $ Map.insert position pieceType board
-  _       -> Nothing  -- can only insert an X or O at an empty square
+makeMove :: Board -> Piece -> MaybeT IO Board
+makeMove board piece = do
+  position <- getMove
+  case Map.lookup position board of
+    Nothing -> return $ Map.insert position piece board
+    _       -> puts "Choose an empty square." >> makeMove board piece
 
 
 getMove :: MaybeT IO Position
-getMove = let puts = liftIO . putStrLn in do
+getMove = do
   puts "Make your move in the form (x, y)"
   input <- liftIO getLine
   let pos = readMay input :: Maybe (Int, Int)
@@ -82,25 +86,24 @@ showCell Nothing  = "."
 showBoard :: Board -> String
 showBoard board =
   let spot = showCell . flip Map.lookup board
-  in " " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1)
-     ++ "\n---|---|---\n" ++
-     " " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2)
-     ++ "\n---|---|---\n" ++
-     " " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
+  in "   1   2   3 \n" ++ 
+     " 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1)
+     ++ "\n  ---|---|---\n" ++
+     " 2 " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2)
+     ++ "\n  ---|---|---\n" ++
+     " 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
 
 
 loop :: Board -> Piece -> MaybeT IO ()
-loop board piece = let puts = liftIO . putStrLn in do
+loop board piece = do
   puts $ showBoard board ++ "\n"
   when (win board X) (puts "Player X wins!")
   when (win board O) (puts "Player O wins!")
   when (draw board) (puts "Cat's game!")
   guard . not $ gameOver board -- TODO: real victory/draw message w/o "Nothing"
   puts $ "Player " ++ show piece ++ " to move."
-  position <- getMove
-  case makeMove board position piece of
-    Just newBoard -> loop newBoard (other piece)
-    Nothing       -> (puts "Choose an empty square.") >> loop board piece
+  newBoard <- makeMove board piece
+  loop newBoard (other piece)
 
 main :: IO (Maybe ())
 main = runMaybeT $ loop emptyBoard X
