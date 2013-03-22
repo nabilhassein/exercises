@@ -10,7 +10,7 @@ data Piece = X | O deriving (Eq, Show)
 data Error = NonEmpty | OutOfBounds | BadInput
 instance Show Error where
   show NonEmpty    = "\nThat square is already taken. Try another move."
-  show OutOfBounds = "\nThat square is out of bounds. Enter square from 1 to 3."
+  show OutOfBounds = "\nOut of bounds. Choose a square from 1 to 3."
   show BadInput    = "\nCouldn't understand input. Try again."
 
 type Position = (Int, Int)
@@ -51,7 +51,7 @@ emptyBoard = Map.empty
 
 -- game logic
 win :: Board -> Piece -> Bool
-win board piece = or [threeInARow board piece lane | lane <- winningPositions]
+win board piece = any (threeInARow board piece) winningPositions
 
 threeInARow :: Board -> Piece -> [Position] -> Bool
 threeInARow board piece lane = all (== (Just piece))
@@ -62,9 +62,9 @@ draw board = (Map.size board == 9) && not (win board X) && not (win board O)
 
 gameOver :: Board -> Maybe String
 gameOver board
-  | win board X = Just "Player X wins!"
-  | win board O = Just "Player O wins!"
-  | draw board  = Just "Cat's Game."
+  | win board X = Just "\nPlayer X wins!"
+  | win board O = Just "\nPlayer O wins!"
+  | draw board  = Just "\nCat's Game."
   | otherwise   = Nothing
 
 makeMove :: Board -> String -> Piece -> Either Error Board
