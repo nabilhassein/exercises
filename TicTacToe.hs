@@ -35,18 +35,21 @@ other :: Piece -> Piece
 other X = O
 other O = X
 
-winningPositions :: [[Position]]
-winningPositions = [[(1, 1), (1, 2), (1, 3)], -- first 3: vertical
-                    [(2, 1), (2, 2), (2, 3)],
-                    [(3, 1), (3, 2), (3, 3)],
-                    [(1, 1), (2, 1), (3, 1)], -- next 3: horizontal
-                    [(1, 2), (2, 2), (3, 2)],
-                    [(1, 3), (2, 3), (3, 3)],
-                    [(1, 1), (2, 2), (3, 3)], -- last 2: diagonal
-                    [(1, 3), (2, 2), (3, 1)]]  
+legal :: [Int]
+legal = [1, 2, 3]
 
 emptyBoard :: Board
 emptyBoard = Map.empty
+
+winningPositions :: [[Position]]
+winningPositions = [map (1,) legal, -- first three are vertical
+                    map (2,) legal,
+                    map (3,) legal,
+                    map (,1) legal, -- next three are horizontal
+                    map (,2) legal,
+                    map (,3) legal,
+                    map (\x -> (x, x)) legal, -- last two are diagonal
+                    [(x, y) | x <- legal, y <- legal, x + y == 4]]
 
 
 -- game logic
@@ -68,7 +71,7 @@ gameOver board
   | otherwise   = Nothing
 
 makeMove :: Board -> String -> Piece -> Either Error Board
-makeMove board position piece = let legal = [1, 2, 3] in
+makeMove board position piece =
   case readMay position :: Maybe (Int, Int) of
     Nothing     -> Left BadInput
     Just (x, y) -> if x `notElem` legal || y `notElem` legal
