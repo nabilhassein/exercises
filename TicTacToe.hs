@@ -18,7 +18,9 @@ type Position = (Int, Int)
 type Board = Map.Map Position Piece
 showBoard :: Board -> String
 showBoard board =
-  let spot = showCell . flip Map.lookup board
+  let spot :: Position -> String
+      spot = showCell . flip Map.lookup board
+      showCell :: Maybe Piece -> String
       showCell (Just X) = "X"
       showCell (Just O) = "O"
       showCell Nothing  = " "
