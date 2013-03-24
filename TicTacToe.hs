@@ -9,9 +9,9 @@ data Piece = X | O deriving (Eq, Show)
 
 data Error = NonEmptySquare | OutOfBounds | BadInput
 instance Show Error where
-  show NonEmptySquare    = "\nThat square is already taken. Try another move."
-  show OutOfBounds = "\nOut of bounds. Choose a square from 1 to 3."
-  show BadInput    = "\nCouldn't understand input. Try again."
+  show NonEmptySquare = "\nThat square is already taken. Try another move."
+  show OutOfBounds    = "\nOut of bounds. Choose a square from 1 to 3."
+  show BadInput       = "\nCouldn't understand input. Try again."
 
 type Position = (Int, Int)
 
