@@ -7,9 +7,9 @@ import Safe (readMay)
 -- data types and their display logic
 data Piece = X | O deriving (Eq, Show)
 
-data Error = NonEmpty | OutOfBounds | BadInput
+data Error = NonEmptySquare | OutOfBounds | BadInput
 instance Show Error where
-  show NonEmpty    = "\nThat square is already taken. Try another move."
+  show NonEmptySquare    = "\nThat square is already taken. Try another move."
   show OutOfBounds = "\nOut of bounds. Choose a square from 1 to 3."
   show BadInput    = "\nCouldn't understand input. Try again."
 
@@ -22,8 +22,8 @@ showBoard board =
       showCell (Just X) = "X"
       showCell (Just O) = "O"
       showCell Nothing  = " "
-  in "\n   1   2   3 "                                                      ++ 
-     "\n 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1) ++ 
+  in "\n   1   2   3 "                                                      ++
+     "\n 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1) ++
      "\n  ---|---|---"                                                      ++
      "\n 2 " ++ spot (1, 2) ++ " | " ++ spot (2, 2) ++ " | " ++ spot (3, 2) ++
      "\n  ---|---|---"                                                      ++
@@ -57,8 +57,8 @@ win :: Board -> Piece -> Bool
 win board piece = any (threeInARow board piece) winningPositions
 
 threeInARow :: Board -> Piece -> [Position] -> Bool
-threeInARow board piece lane = all (== (Just piece))
-                               [Map.lookup spot board | spot <- lane]
+threeInARow board piece lane = all (== Just piece) [Map.lookup spot board
+                                                   | spot <- lane]
 
 draw :: Board -> Bool
 draw board = (Map.size board == 9) && not (win board X) && not (win board O)
@@ -77,8 +77,8 @@ makeMove board position piece =
     Just (x, y) -> if x `notElem` legal || y `notElem` legal
                    then Left OutOfBounds
                    else case Map.lookup (x, y) board of
+                     Just _  -> Left NonEmptySquare
                      Nothing -> Right $ Map.insert (x, y) piece board
-                     _       -> Left NonEmpty
 
 loop :: Board -> Piece -> IO ()
 loop board piece = do
