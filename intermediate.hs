@@ -23,13 +23,13 @@ newtype EitherRight a b = EitherRight (Either a b)
 
 -- exercise 4
 instance Fluffy (EitherLeft b) where
-  furry f (EitherLeft (Left a))  = EitherLeft . Left $ f a
+  furry f (EitherLeft (Left a))  = EitherLeft $ Left $ f a
   furry _ (EitherLeft (Right b)) = EitherLeft $ Right b
 
 -- exercise 5
 instance Fluffy (EitherRight a) where
-  furry _ (EitherRight (Left a))  = EitherRight . Left $ a
-  furry f (EitherRight (Right b)) = EitherRight . Right $ f b
+  furry _ (EitherRight (Left a))  = EitherRight $ Left $ a
+  furry f (EitherRight (Right b)) = EitherRight $ Right $ f b
 
 
 
@@ -76,7 +76,7 @@ jellybean = banana id
 
 -- exercise 13
 apple :: Misty m => m a -> m (a -> b) -> m b
-apple x f = undefined
+apple x f = unicorn $ undefined
 
 -- exercise 14
 moppy :: Misty m => [a] -> (a -> m b) -> m [b]

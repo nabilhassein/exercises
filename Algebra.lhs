@@ -5,9 +5,9 @@ their composition is also a function that permutes three elements.
 (That is, show the symmetric group S_3 satisfies the group axiom of closure.)
 
 I got this problem for homework when I was studying abstract algebra, but
-I didn't want to compute 36 function compositions by hand, so I wrote
-this program to answer the question for me. It has some sentimental value for me
-because it was the first nontrivial Haskell program I wrote.
+I didn't want to compute 36 function compositions each applied to three values
+by hand, so I wrote this program to answer the question for me. It also has some
+sentimental value for me: it was the first nontrivial Haskell program I wrote.
 
 I think it's a cute program, but I wasn't sure if anyone doing Hacker School
 admissions knows Haskell, so I decided to spend an afternoon making it readable
@@ -88,8 +88,7 @@ This works because of the correspondence between indices of "output" and
 >       i2 = read ans2 :: Int
 >       f = (permutations !! i1) . (permutations !! i2)
 >       -- (.) is function composition; (!!) is list indexing
->       a = elemIndex (map f input) output
->   putStrLn $ show a ++ "\n"
+>   print $ elemIndex (map f input) output
 
 I enjoyed and learned from writing this, and I hoped you liked reading it!
 

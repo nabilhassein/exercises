@@ -5,6 +5,10 @@ import qualified Data.Map as Map
 import Data.Ratio
 import Data.Function (on)
 import System.IO
+import System.Environment (getArgs)
+
+-- TODO: remove punctuation from frequencyList
+
 
 --exercise 2.5.1
 ttRatio :: [String] -> Rational
@@ -37,7 +41,14 @@ skipBigram []     = []
 skipBigram (x:xs) = map (x,) xs ++ skipBigram xs
 
 
-main :: IO ()
-main = openFile "nlpwp-data/brown.txt" ReadMode >>= hGetContents >>=
-       putStrLn . show . Map.lookup "the" . frequencyList . words
+count :: FilePath -> String -> IO ()
+count file word = openFile file ReadMode >>= hGetContents
+                  >>= print . Map.lookup word . frequencyList . words
 
+check :: String -> IO ()
+check = count "C:\\Users\\nabil\\Dropbox\\blog\\posts\\washout.md"
+
+main :: IO ()
+main = do
+  args <- getArgs
+  count (args !! 0) (args !! 1)

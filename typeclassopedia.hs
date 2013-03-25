@@ -26,10 +26,23 @@ class (Applicative m) => Monad m where
   join x = x >>= id
 
   (>>=) :: m a -> (a -> m b) -> m b
-  x >>= f = join (fmap f x)
+  x >>= f = join $ fmap f x
 
   (>>) :: m a -> m b -> m b
   x >> y = x >>= \_ -> y
+
+
+class Monad m => MonadPlus m where
+  mzero :: m a
+  mplus :: m a -> m a -> m a
+
+
+class (Monad m) => MonadFix m where
+  mfix :: (a -> m a) -> m a
+
+
+class MonadTrans t where
+  lift :: (Monad m) => m a -> t m a
 
 
 class Monoid m where
@@ -55,6 +68,10 @@ instance Monad Maybe where
   Just x  >>= f = f x
   Nothing >>= _ = Nothing
 
+instance MonadPlus Maybe where
+  mzero = Nothing
+  Nothing `mplus` b = b
+  a       `mplus` _ = a
 
 instance Functor (Either e) where
   fmap _ (Left e)  = Left e
@@ -84,6 +101,10 @@ instance Applicative [] where
 
 instance Monad [] where
   join = concat
+
+instance Monoid [a] where
+  mempty = []
+  mappend = (++)
 
 
 newtype ZipList a = ZipList {getZipList :: [a]}
@@ -128,14 +149,21 @@ instance Monad ((->) e) where
   join f x = f x x
 
 
--- applicative utilities
+
+-- functor utilities
+void :: Functor f => f a -> f ()
+void = fmap $ const ()
+
+
+
+-- Applicative utilities
 
 -- synonym for fmap
 (<$>) :: (Applicative f) => (a -> b) -> f a -> f b
 f <$> x = pure f <*> x
 
-(<$) :: (Applicative f) => a -> f b -> f a
-a <$ y = const a <$> y
+(<$) :: (Applicative f) => b -> f a -> f b
+b <$ x = const b <$> x
 
 (<**>) :: Applicative f => f a -> f (a -> b) -> f b
 (<**>) = flip (<*>)
@@ -152,32 +180,36 @@ liftA3 f x y z = f <$> x <*> y <*> z
 
 
 
--- monad utilities
+-- Monad utilities
 
 -- synonym for fmap
 liftM :: (Monad m) => (a -> b) -> m a -> m b
 liftM f x = x >>= (return . f)
 
+liftM2 :: Monad m => (a -> b -> c) -> m a -> m b -> m c
+liftM2 f x y =
+  x >>= \a ->
+  y >>= \b ->
+  return $ f a b
+
 -- synonym for (<*>)
 ap :: (Monad m) => m (a -> b) -> m a -> m b
 ap f x =
   f >>= \g ->
-  x >>= \y ->
-  return $ g y
+  x >>= \a ->
+  return $ g a
 
 sequence :: Monad m => [m a] -> m [a]
-sequence = foldr mcons (return [])
-  where mcons :: (Monad m) => m a -> m [a] -> m [a]
-        mcons x xs =
-          x >>= \a ->
-          xs >>= \as ->
-          return $ a:as
+sequence = foldr (liftM2 (:)) (return [])
 
 sequence_ :: Monad m => [m a] -> m ()
 sequence_ = foldr (>>) (return ())
 
 replicateM :: (Monad m) => Int -> m a -> m [a]
 replicateM n = sequence . replicate n
+
+replicateM_ :: (Monad m) => Int -> m a -> m ()
+replicateM_ n = sequence_ . replicate n
 
 when :: (Monad m) => Bool -> m () -> m ()
 when p x = if p then x else return ()
@@ -202,6 +234,38 @@ forM_ = flip mapM_
 
 (>=>) :: (Monad m) => (a -> m b) -> (b -> m c) -> a -> m c
 (f >=> g) x = f x >>= g
+
+(<=<) :: (Monad m) => (b -> m c) -> (a -> m b) -> a -> m c
+(<=<) = flip (>=>)
+
+forever :: (Monad m) => m a -> m b
+forever x = x >> forever x
+
+filterM :: (Monad m) => (a -> m Bool) -> [a] -> m [a]
+filterM _ [] = return []
+filterM p (x:xs) =
+  p x >>= \cond ->
+  filterM p xs >>= \ys ->
+  return $ if cond
+           then x:ys
+           else ys
+  
+  
+
+-- MonadPlus utilities
+
+guard :: (MonadPlus m) => Bool -> m ()
+guard b = if b then return () else mzero
+
+msum :: (MonadPlus m) => [m a] -> m a
+msum = foldr mplus mzero
+
+mfilter :: (MonadPlus m) => (a -> Bool) -> m a -> m a
+mfilter p ma =
+  ma >>= \a ->
+  if p a
+  then ma
+  else mzero
 
 -- TODO: alternative
 

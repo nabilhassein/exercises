@@ -1,3 +1,5 @@
+{-# LANGUAGE NoImplicitPrelude #-}
+
 module MyPrelude where
 
 import qualified Prelude as P
