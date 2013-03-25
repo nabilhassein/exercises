@@ -2,9 +2,10 @@
 
 module Main where
 
+import           Safe (readMay)
+import           Data.Char (toUpper, toLower)
 import qualified Data.Map as Map
-import Safe (readMay)
-import Data.Char (toUpper, toLower)
+
 
 -- data types and their display logic
 data Piece = X | O deriving (Eq, Show, Read)
@@ -117,9 +118,9 @@ choosePiece = do
   putStrLn "Enter the name of the piece you want to play against the computer."
   piece <- getLine
   case map toUpper piece of
-    'X':_ -> putStrLn "You'll go first, and play X."  >> return X
-    'O':_ -> putStrLn "You'll go second, and play O." >> return O
-    _     -> putStrLn "Bad input. Only enter X or O." >> choosePiece
+    'X':_ -> putStrLn "You'll play X, and go first."         >> return X
+    'O':_ -> putStrLn "You'll play O; the AI will go first." >> return O
+    _     -> putStrLn "Bad input. Only enter X or O."        >> choosePiece
 
 onePlayer :: Board -> Piece -> IO ()
 onePlayer _ _ = putStrLn "onePlayer" -- TODO
