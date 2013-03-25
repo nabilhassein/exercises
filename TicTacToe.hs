@@ -114,14 +114,12 @@ startSoloGame = choosePiece >>= onePlayer emptyBoard
 
 choosePiece :: IO Piece
 choosePiece = do
-  putStrLn "Enter the name of the piece you want to play."
-  piece:_ <- getLine
-  -- explicitly ignore all but first char so that the recursive call doesn't
-  -- confusedly treat each part of input string as separate, like getChar does
-  case toUpper piece of
-    'X' -> return X
-    'O' -> return O
-    _   -> putStrLn "Bad input. Only enter X or O." >> choosePiece
+  putStrLn "Enter the name of the piece you want to play against the computer."
+  piece <- getLine
+  case map toUpper piece of
+    'X':_ -> putStrLn "You'll go first, and play X."  >> return X
+    'O':_ -> putStrLN "You'll go second, and play O." >> return O
+    _     -> putStrLn "Bad input. Only enter X or O." >> choosePiece
 
 onePlayer :: Board -> Piece -> IO ()
 onePlayer _ _ = putStrLn "onePlayer" -- TODO
