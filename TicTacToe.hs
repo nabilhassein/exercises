@@ -1,11 +1,13 @@
-module TicTacToe where
+{-# LANGUAGE TupleSections #-}
+
+module Main where
 
 import qualified Data.Map as Map
 import Safe (readMay)
-
+import Data.Char (toUpper, toLower)
 
 -- data types and their display logic
-data Piece = X | O deriving (Eq, Show)
+data Piece = X | O deriving (Eq, Show, Read)
 
 data Error = NonEmptySquare | OutOfBounds | BadInput
 instance Show Error where
@@ -17,13 +19,13 @@ type Position = (Int, Int)
 
 type Board = Map.Map Position Piece
 showBoard :: Board -> String
-showBoard board =
-  let spot :: Position -> String
-      spot = showCell . flip Map.lookup board
-      showCell :: Maybe Piece -> String
-      showCell (Just X) = "X"
-      showCell (Just O) = "O"
-      showCell Nothing  = " "
+showBoard board = let showCell :: Maybe Piece -> String
+                      showCell (Just X) = "X"
+                      showCell (Just O) = "O"
+                      showCell Nothing  = " "
+
+                      spot :: Position -> String
+                      spot = showCell . flip Map.lookup board
   in "\n   1   2   3 "                                                      ++
      "\n 1 " ++ spot (1, 1) ++ " | " ++ spot (2, 1) ++ " | " ++ spot (3, 1) ++
      "\n  ---|---|---"                                                      ++
@@ -63,7 +65,7 @@ threeInARow board piece lane = all (== Just piece) [Map.lookup spot board
                                                    | spot <- lane]
 
 draw :: Board -> Bool
-draw board = (Map.size board == 9) && not (win board X) && not (win board O)
+draw board = Map.size board == 9 && not (win board X) && not (win board O)
 
 gameOver :: Board -> Maybe String
 gameOver board
@@ -81,8 +83,20 @@ makeMove board piece (Just (x, y)) =
     Just _  -> Left NonEmptySquare
     Nothing -> Right $ Map.insert (x, y) piece board
 
-loop :: Board -> Piece -> IO ()
-loop board piece = do
+
+-- game setup and execution; only these functions perform I/O
+main :: IO ()
+main = do
+  putStrLn "Enter 'human' without quotes to play for two players.\n\
+           \Enter anything else to face the unbeatable machine."
+  opponent <- getLine
+  case map toLower opponent of
+    "human" -> twoPlayers emptyBoard X
+    _       -> startSoloGame
+
+
+twoPlayers :: Board -> Piece -> IO ()
+twoPlayers board piece = do
   putStrLn $ showBoard board
   case gameOver board of
     Just string -> putStrLn string
@@ -91,9 +105,24 @@ loop board piece = do
       input <- getLine
       let position = readMay input :: Maybe Position
       case makeMove board piece position of
-        Left  err      -> putStrLn (show err) >> loop board piece
-        Right newBoard -> loop newBoard (other piece)
+        Left  err      -> putStrLn (show err) >> twoPlayers board piece
+        Right newBoard -> twoPlayers newBoard (other piece)
 
-main :: IO ()
-main = loop emptyBoard X
+
+startSoloGame :: IO ()
+startSoloGame = choosePiece >>= onePlayer emptyBoard
+
+choosePiece :: IO Piece
+choosePiece = do
+  putStrLn "Enter the name of the piece you want to play."
+  piece:_ <- getLine
+  -- explicitly ignore all but first char so that the recursive call doesn't
+  -- confusedly treat each part of input string as separate, like getChar does
+  case toUpper piece of
+    'X' -> return X
+    'O' -> return O
+    _   -> putStrLn "Bad input. Only enter X or O." >> choosePiece
+
+onePlayer :: Board -> Piece -> IO ()
+onePlayer _ _ = putStrLn "onePlayer" -- TODO
 
