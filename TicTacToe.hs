@@ -118,7 +118,7 @@ choosePiece = do
   piece <- getLine
   case map toUpper piece of
     'X':_ -> putStrLn "You'll go first, and play X."  >> return X
-    'O':_ -> putStrLN "You'll go second, and play O." >> return O
+    'O':_ -> putStrLn "You'll go second, and play O." >> return O
     _     -> putStrLn "Bad input. Only enter X or O." >> choosePiece
 
 onePlayer :: Board -> Piece -> IO ()
