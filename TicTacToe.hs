@@ -72,15 +72,14 @@ gameOver board
   | draw board  = Just "\nCat's Game."
   | otherwise   = Nothing
 
-makeMove :: Board -> String -> Piece -> Either Error Board
-makeMove board position piece =
-  case readMay position :: Maybe (Int, Int) of
-    Nothing     -> Left BadInput
-    Just (x, y) -> if x `notElem` legal || y `notElem` legal
-                   then Left OutOfBounds
-                   else case Map.lookup (x, y) board of
-                     Just _  -> Left NonEmptySquare
-                     Nothing -> Right $ Map.insert (x, y) piece board
+makeMove :: Board -> Piece -> Maybe (Int, Int) -> Either Error Board
+makeMove _      _    Nothing       = Left BadInput
+makeMove board piece (Just (x, y)) =
+  if x `notElem` legal || y `notElem` legal
+  then Left OutOfBounds
+  else case Map.lookup (x, y) board of
+    Just _  -> Left NonEmptySquare
+    Nothing -> Right $ Map.insert (x, y) piece board
 
 loop :: Board -> Piece -> IO ()
 loop board piece = do
@@ -90,7 +89,8 @@ loop board piece = do
     Nothing     -> do
       putStrLn $ "\nPlayer " ++ show piece ++ ", move in the form (x, y)."
       input <- getLine
-      case makeMove board input piece of
+      let position = readMay input :: Maybe (Int, Int)
+      case makeMove board piece position of
         Left  err      -> putStrLn (show err) >> loop board piece
         Right newBoard -> loop newBoard (other piece)
 
