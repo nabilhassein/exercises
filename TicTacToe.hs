@@ -72,7 +72,7 @@ gameOver board
   | draw board  = Just "\nCat's Game."
   | otherwise   = Nothing
 
-makeMove :: Board -> Piece -> Maybe (Int, Int) -> Either Error Board
+makeMove :: Board -> Piece -> Maybe Position -> Either Error Board
 makeMove _      _    Nothing       = Left BadInput
 makeMove board piece (Just (x, y)) =
   if x `notElem` legal || y `notElem` legal
@@ -89,7 +89,7 @@ loop board piece = do
     Nothing     -> do
       putStrLn $ "\nPlayer " ++ show piece ++ ", move in the form (x, y)."
       input <- getLine
-      let position = readMay input :: Maybe (Int, Int)
+      let position = readMay input :: Maybe Position
       case makeMove board piece position of
         Left  err      -> putStrLn (show err) >> loop board piece
         Right newBoard -> loop newBoard (other piece)
