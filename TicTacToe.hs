@@ -95,7 +95,6 @@ main = do
     "human" -> twoPlayers emptyBoard X
     _       -> startSoloGame
 
-
 twoPlayers :: Board -> Piece -> IO ()
 twoPlayers board piece = do
   putStrLn $ showBoard board
@@ -111,7 +110,11 @@ twoPlayers board piece = do
 
 
 startSoloGame :: IO ()
-startSoloGame = choosePiece >>= onePlayer emptyBoard
+startSoloGame = do
+  piece <- choosePiece
+  case piece of
+    X -> makeSoloMove emptyBoard X
+    O -> makeAIMove   emptyBoard X
 
 choosePiece :: IO Piece
 choosePiece = do
@@ -122,6 +125,10 @@ choosePiece = do
     'O':_ -> putStrLn "You'll play O; the AI will go first." >> return O
     _     -> putStrLn "Bad input. Only enter X or O."        >> choosePiece
 
-onePlayer :: Board -> Piece -> IO ()
-onePlayer _ _ = putStrLn "onePlayer" -- TODO
+-- these two functions are mutually recursive
+makeSoloMove :: Board -> Piece -> IO ()
+makeSoloMove = undefined
+
+makeAIMove :: Board -> Piece -> IO ()
+makeAIMove = undefined
 
