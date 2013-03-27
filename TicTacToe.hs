@@ -3,9 +3,7 @@
 module Main where
 
 import           Safe (readMay)
-import           Data.Char (toUpper, toLower)
 import qualified Data.Map as Map
-
 
 -- data types and their display logic
 data Piece = X | O deriving (Eq, Show, Read)
@@ -34,7 +32,6 @@ showBoard board = let showCell :: Maybe Piece -> String
      "\n  ---|---|---"                                                      ++
      "\n 3 " ++ spot (1, 3) ++ " | " ++ spot (2, 3) ++ " | " ++ spot (3, 3)
 
-
 -- useful helper functions and variables
 other :: Piece -> Piece
 other X = O
@@ -55,7 +52,6 @@ winningPositions = [map (1,) legal, -- first three are vertical
                     map (,3) legal,
                     map (\x -> (x, x)) legal, -- last two are diagonal
                     [(x, y) | x <- legal, y <- legal, x + y == 4]]
-
 
 -- game logic
 win :: Board -> Piece -> Bool
@@ -84,19 +80,12 @@ makeMove board piece (Just (x, y)) =
     Just _  -> Left NonEmptySquare
     Nothing -> Right $ Map.insert (x, y) piece board
 
-
 -- game setup and execution; only these functions perform I/O
 main :: IO ()
-main = do
-  putStrLn "Enter 'human' without quotes to play for two players.\n\
-           \Enter anything else to face the unbeatable machine."
-  opponent <- getLine
-  case map toLower opponent of
-    "human" -> twoPlayers emptyBoard X
-    _       -> startSoloGame
+main = loop emptyBoard X
 
-twoPlayers :: Board -> Piece -> IO ()
-twoPlayers board piece = do
+loop :: Board -> Piece -> IO ()
+loop board piece = do
   putStrLn $ showBoard board
   case gameOver board of
     Just string -> putStrLn string
@@ -105,30 +94,6 @@ twoPlayers board piece = do
       input <- getLine
       let position = readMay input :: Maybe Position
       case makeMove board piece position of
-        Left  err      -> putStrLn (show err) >> twoPlayers board piece
-        Right newBoard -> twoPlayers newBoard (other piece)
-
-
-startSoloGame :: IO ()
-startSoloGame = do
-  piece <- choosePiece
-  case piece of
-    X -> makeSoloMove emptyBoard X
-    O -> makeAIMove   emptyBoard X
-
-choosePiece :: IO Piece
-choosePiece = do
-  putStrLn "Enter the name of the piece you want to play against the computer."
-  piece <- getLine
-  case map toUpper piece of
-    'X':_ -> putStrLn "You'll play X, and go first."         >> return X
-    'O':_ -> putStrLn "You'll play O; the AI will go first." >> return O
-    _     -> putStrLn "Bad input. Only enter X or O."        >> choosePiece
-
--- these two functions are mutually recursive
-makeSoloMove :: Board -> Piece -> IO ()
-makeSoloMove = undefined
-
-makeAIMove :: Board -> Piece -> IO ()
-makeAIMove = undefined
+        Left  err      -> print err >> loop board piece
+        Right newBoard -> loop newBoard (other piece)
 
