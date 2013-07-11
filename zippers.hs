@@ -16,18 +16,15 @@ data FSItem   = File Name Data | Folder Name [FSItem] deriving Show
 data FSCrumb  = FSCrumb Name [FSItem] [FSItem]        deriving Show
 type FSZipper = (FSItem, [FSCrumb])
 
-
 fsUp :: FSZipper -> Either T.Text FSZipper
 fsUp (_, [])                      = Left "No upward path to follow"
 fsUp (x, FSCrumb name ls rs : bs) = Right (Folder name (ls ++ [x] ++ rs), bs)
 
 fsTo :: Name -> FSZipper -> Either T.Text FSZipper
-fsTo _    (File   _ _ ,              _ ) =
-  Left "Can only focus further if currently focused on a Folder"
-fsTo name (Folder folderName items , bs) =
-  case break (nameIs name) items of
-    (_ , [])      -> Left $ "The name " <> name <> " is not in this Folder"
-    (ls, item:rs) -> Right (item, FSCrumb folderName ls rs : bs)
+fsTo _    (File   _          _     , _ ) = Left "fsTo: not focused on a Folder"
+fsTo name (Folder folderName items , bs) = case break (nameIs name) items of
+  (_ , [])      -> Left $ "The name " <> name <> " is not in this Folder"
+  (ls, item:rs) -> Right (item, FSCrumb folderName ls rs : bs)
 
 nameIs :: Name -> FSItem -> Bool
 nameIs name (File   fileName   _) = name == fileName
@@ -38,6 +35,7 @@ fsRename newName (Folder _ items , bs) = (Folder newName items , bs)
 fsRename newName (File   _ dat   , bs) = (File   newName dat   , bs)
 
 
+-- a simple but nontrivial example for ease of interactive testing in ghci
 myDisk :: FSItem
 myDisk =
     Folder "root"
