@@ -2,7 +2,7 @@
 ;;; In Common Lisp, lexical scope is the default and dynamic scope
 ;;  must be specially requested with either defvar or defparameter,
 ;;  the latter of which is not a standard library function in Emacs Lisp,
-;;  and has been replaced globally with the former in all code in this package.
+;;  and has been replaced globally by the former, or setq, in this package.
 
 ;;; exercise-1.el --- Summary: The first exercise from "Land of Lisp",
 ;;  but in Emacs Lisp rather than the textbook's Common Lisp.

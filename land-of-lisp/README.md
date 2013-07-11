@@ -20,6 +20,6 @@ It was necessary to test all of those examples in order to determine where the
 behavior of Emacs Lisp differed from that of Common Lisp.
 
 Useful Emacs Lisp references:
-
+  Emacs! Its own documentation is extremely useful, though not the be-all end-all
 
 Useful Common Lisp references:
