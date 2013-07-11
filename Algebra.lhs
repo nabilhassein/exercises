@@ -26,6 +26,7 @@ To start my own code I declare the list of permutations I'll be using later.
 
 Now I need to fill it. First, a dummy to fool Haskell's zero-based indexing,
 
+> f0, f1, f2, f3, f4, f5, f6 :: Int -> Int
 > f0 = const 0
 
 because the functions I called f1 to f6 are usually named phi_1 to phi_6, and
@@ -69,7 +70,7 @@ You cannot directly compare functions for equality, because it is undecidable
 two functions are equal if and only if for each input they give the same output.
 I use this strategy.
 
-My homework was to hand in a chart, showing that I had exhaustively computed the
+My homework was to hand in a chart showing that I had exhaustively computed the
 results of each possible function composition. I therefore wrote my main to run
 interactively until interrupted, so I could fill in a few answers at a time.
 
@@ -91,4 +92,3 @@ This works because of the correspondence between indices of "output" and
 >   print $ elemIndex (map f input) output
 
 I enjoyed and learned from writing this, and I hoped you liked reading it!
-
