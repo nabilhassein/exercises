@@ -4,8 +4,8 @@
 
 module Zippers where
 
-import           Data.List            (break)
-import           Data.ByteString.Lazy () -- instance IsString ByteString
+import           Data.List                  (break)
+import           Data.ByteString.Lazy.Char8 () -- instance IsString ByteString
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.Text            as T
 
@@ -63,15 +63,19 @@ type Zipper a = (Tree a, [Crumb a])
 (-:) :: a -> (a -> b) -> b
 x -: f = f x
 
-goLeft :: Zipper a -> Zipper a
-goLeft (Node x l r, bs) = (l, LeftCrumb x r:bs)
+goLeft :: Zipper a -> Maybe (Zipper a)
+goLeft (Node x l r, bs) = Just (l, LeftCrumb x r:bs)
+goLeft (Empty, _) = Nothing
 
-goRight :: Zipper a -> Zipper a
-goRight (Node x l r, bs) = (r, RightCrumb x l:bs)
+goRight :: Zipper a -> Maybe (Zipper a)
+goRight (Node x l r, bs) = Just (r, RightCrumb x l:bs)
+goRight (Empty, _) = Nothing
 
-goUp :: Zipper a -> Zipper a
-goUp (t, (LeftCrumb  x r) : bs) = (Node x t r, bs)
-goUp (t, (RightCrumb x l) : bs) = (Node x l t, bs)
+goUp :: Zipper a -> Maybe (Zipper a)
+goUp (t, (LeftCrumb  x r) :bs) = Just (Node x t r, bs)
+goUp (t, (RightCrumb x l) :bs) = Just (Node x l t, bs)
+goUp (_, [])                   = Nothing
+
 
 modify :: (a -> a) -> Zipper a -> Zipper a
 modify f ((Node x l r), bs) = (Node (f x) l r, bs)
@@ -80,6 +84,6 @@ modify _ (Empty,        bs) = (Empty, bs)
 attach :: Tree a -> Zipper a -> Zipper a
 attach t (_, bs) = (t, bs)
 
-topMost :: Zipper a -> Zipper a
-topMost (t,[]) = (t,[])
-topMost z      = topMost (goUp z)
+-- topMost :: Zipper a -> Zipper a
+-- topMost (t,[]) = (t,[])
+-- topMost z      = topMost (goUp z)
