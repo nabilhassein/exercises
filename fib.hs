@@ -8,4 +8,4 @@ memoized_fib    n    = map fib [0 ..] !! n
          fib    k    = memoized_fib (k-2) + memoized_fib (k-1)
 
 main :: IO ()
-main = mapM_ print $ map memoized_fib [1..50]
+main = print $ memoized_fib 50
