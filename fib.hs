@@ -23,18 +23,19 @@ cute_fib    n    = fibs !! n
   where fibs :: [Integer]
         fibs  = 0 : 1 : zipWith (+) fibs (tail fibs)
 
--- This computation of the closed-form solution is imperfect:
+-- This computation of the closed-form solution is imperfect, as shown below:
 -- https://en.wikipedia.org/wiki/Fibonacci_number#Closed-form_expression
 closed_fib :: Int -> Integer
-closed_fib    n    = round $ (phi^n - psi^n) / sqrt 5
+closed_fib    n    = round $ phi^n / sqrt 5
   where phi, psi :: Double
         phi = (1 + (sqrt 5)) / 2
         psi = 1 - phi
 
--- This function demonstrates that above closed form solution is only accurate
--- through the 75th fibonacci number, presumably due to floating point error.
--- I wonder how to improve it? Arbitrary-precision arithmetic is probably
--- possible, but I do not how fast or easy it is to use/implement. Perhaps see
+-- This function demonstrates the above closed form solution to be accurate only
+-- through the 75th fibonacci number, due to floating point error. It is
+-- not immediately obvious to me how to improve it. Using a representation of
+-- floating point numbers with greater than 60 bits is possible, but I do not
+-- know how fast or easy it is to use and/or implement. Perhaps see
 -- http://www.haskell.org/haskellwiki/Exact_real_arithmetic
 divergence :: Int
 divergence = let iterative_fibs   = map cute_fib   [0..]
