@@ -27,22 +27,21 @@ cute_fib    n    = fibs !! n
 -- https://en.wikipedia.org/wiki/Fibonacci_number#Closed-form_expression
 closed_fib :: Int -> Integer
 closed_fib    n    = round $ phi^n / sqrt 5
-  where phi, psi :: Double
-        phi = (1 + (sqrt 5)) / 2
-        psi = 1 - phi
+  where phi :: Double
+        phi  = (1 + sqrt 5) / 2
 
 -- This function demonstrates the above closed form solution to be accurate only
 -- through the 75th fibonacci number, due to floating point error. It is
 -- not immediately obvious to me how to improve it. Using a representation of
--- floating point numbers with greater than 60 bits is possible, but I do not
+-- floating point numbers with greater than 64 bits is possible, but I do not
 -- know how fast or easy it is to use and/or implement. Perhaps see
 -- http://www.haskell.org/haskellwiki/Exact_real_arithmetic
 divergence :: Int
 divergence = let iterative_fibs   = map cute_fib   [0..]
                  closed_form_fibs = map closed_fib [0..]
-             in  firstUnequal iterative_fibs closed_form_fibs
+             in  firstUnequalIndex iterative_fibs closed_form_fibs
   where
-    firstUnequal = go 0
+    firstUnequalIndex = go 0
     go :: Int -> [Integer] -> [Integer] -> Int
     go    n      (x:xs)       (y:ys)     = if x /= y then n else go (n+1) xs ys
 
