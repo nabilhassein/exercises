@@ -31,9 +31,10 @@ closed_fib    n    = round $ phi^n / sqrt 5
         phi  = (1 + sqrt 5) / 2
 
 -- This function demonstrates the above closed form solution to be accurate only
--- through the 75th fibonacci number, due to floating point error. It is
--- not immediately obvious to me how to improve it. Using a representation of
--- floating point numbers with greater than 64 bits is possible, but I do not
+-- through the 75th fibonacci number, due to floating point error.
+-- (If you change phi's type annotation to Float, it is accurate for just 30.)
+-- It is not immediately obvious to me how to improve it. Using a representation
+-- of floating point numbers with greater than 64 bits is possible, but I do not
 -- know how fast or easy it is to use and/or implement. Perhaps see
 -- http://www.haskell.org/haskellwiki/Exact_real_arithmetic
 divergence :: Int
