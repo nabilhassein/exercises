@@ -1,5 +1,4 @@
--- see https://stackoverflow.com/questions/17905537/dependently-typed-printf-in-idris
--- partly copied, partly redone
+-- based on https://stackoverflow.com/questions/17905537/dependently-typed-printf-in-idris
 
 data Format = FormatEnd | FormatInt Format | FormatStr Format | FormatChar Char Format
 
@@ -19,13 +18,10 @@ printfType (FormatStr rest)    = String -> printfType rest
 printfType (FormatChar _ rest) = printfType rest
 
 printf : (s : String) -> printfType (toFormat s)
-printf s = printFormat (toFormat s)
+printf s = go (toFormat s) ""
   where
-    printFormat : (format : Format) -> printfType format
-    printFormat format = go format ""
-      where
-        go : (fmt : Format) -> String -> printfType fmt
-        go FormatEnd           acc = acc
-        go (FormatInt rest)    acc = \i : Int    => go rest (acc ++ show i)
-        go (FormatStr rest)    acc = \s : String => go rest (acc ++ s)
-        go (FormatChar c rest) acc = go rest (acc ++ pack [c])
+    go : (fmt : Format) -> String -> printfType fmt
+    go FormatEnd           acc = acc
+    go (FormatInt rest)    acc = \i : Int    => go rest (acc ++ show i)
+    go (FormatStr rest)    acc = \s : String => go rest (acc ++ s)
+    go (FormatChar c rest) acc = go rest (acc ++ pack [c])
